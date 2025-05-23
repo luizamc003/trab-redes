@@ -8,4 +8,4 @@ Este trabalho consiste no desenvolvimento de duas versões multithread de um ser
 
 branch: c++
 
-branch: go
+branch: golang
