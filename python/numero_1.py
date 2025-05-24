@@ -1,29 +1,41 @@
 import socket
 import threading
 
+HOST = '127.0.0.1'
+PORTA = 1337
+
 def handle_conn(conn: socket.socket):
-    thread_name = threading.current_thread().name # pega o nome da thread, vem no formato "Thread-X (funcao)"
-    thread_number = thread_name[:thread_name.find(' ')] # pega o numero da thread
+    # Pega o nome da thread, vem no formato "Thread-X <Função>"
+    thread_name = threading.current_thread().name 
+    # Pega o numero da thread
+    thread_number = thread_name[:thread_name.find(' ')]
+    # Esse contador é usado mais abaixo para garantir que uma conexão foi encerrada de maneira inesperada. Assim, fechamos a conexão.
     contador_vazias = 0
     with conn:
         print(f"Conectado! Executando na thread {thread_number}")
         while True:
-            entradaBytes = conn.recv(1024) # fica recebendo dados
-             
-            entradaStr = entradaBytes.decode('utf-8') # recebe em bytes, entao tem que decodificar
-            entrada = entradaStr.split() # transforma em lista pra poder mexer mais abaixo
+            # Fica recebendo dados
+            entradaBytes = conn.recv(1024) 
+            # Recebe em bytes, entao tem que decodificar p/ string
+            entradaStr = entradaBytes.decode('utf-8') 
+            # Transforma em lista pra poder avaliar comandos
+            entrada = entradaStr.split() 
             
-            try: # confere os comandos
+            try: 
+                # Confere os comandos
                 if entrada[0] == 'echo':
                     conn.sendall(entradaStr.replace('echo ','').encode('utf-8'))
-                if entrada[0] == 'quit':
+                elif entrada[0] == 'quit':
                     print(f"[Thread {thread_number}] Saindo!")
-                    # conn.sendall("\nSaindo!\n\n".encode('utf-8'))
                     break
+
                 else:
+                    # Se a entrada nao for um comando, mandamos um espaço para o client nao travar no recebimento
                     conn.sendall(' '.encode('utf-8'))
 
-            except IndexError: # caso o usuario tenha apertado so o Enter
+            except IndexError:
+                # Mensagem vazia por acidente do client. Aqui aumentamos o contador_vazias. Se ele chegar a 5 (5 mensagens vazias seguidas)
+                # entao, encerramos a conexão
                 print(f"[Thread {thread_number}] Erro na entrada. Está vazia?")
                 contador_vazias += 1
                 if contador_vazias == 5: # na 5° mensagem vazia fecha a conexao
@@ -31,18 +43,23 @@ def handle_conn(conn: socket.socket):
 
             except Exception:
                 print(f"[Thread {thread_number}] Erro desconhecido!")
-            else: # se der tudo certo, mostra o que recebeu sem o \n
+            else: 
+                # Se der tudo certo, mostra o que recebeu sem o \n e reseta o contador_vazias, pois a conexão não foi encerrada
                 print(f"[Thread {thread_number}] Recebi: {entradaStr.replace('\n','')}") 
                 contador_vazias = 0
     
 
+# Cria um socket, o conecta no host e porta especificados e escuta
 soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-soc.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)  # permite reuso de endereço, serve pra nao ter que mudar a porta toda hora
-soc.bind(('127.0.0.1', 1337))
-soc.listen() # escutando
+
+# Permite reuso de endereço, serve pra nao ter que mudar a porta a cada execução (detalhe da implementação do python)
+soc.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+soc.bind((HOST, PORTA))
+soc.listen() 
 
 while True:
     conn, ad = soc.accept() # aceita conexões
-    thread = threading.Thread(target=handle_conn, args=(conn,))
-    thread.start()
+    thread = threading.Thread(target=handle_conn, args=(conn,)) # cria thread
+    thread.start() # Dispara thread para a conexão
 
