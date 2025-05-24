@@ -7,6 +7,7 @@
 
 int main(int argc, char *argv[])
 {
+    // parametros recebidos
     if (argc != 3)
     {
         std::cerr << "Usage: " << argv[0] << " <screenName> <serverIP>" << std::endl;

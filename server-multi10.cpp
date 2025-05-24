@@ -14,12 +14,14 @@ std::queue<int> clientQueue;
 std::mutex queueMutex;
 std::condition_variable queueCondition;
 
+// funcao para lidar com o cliente
 void handleClient(int clientSocket)
 {
+
     char buffer[1024];
     std::memset(buffer, 0, sizeof(buffer));
 
-    // lê dados do cliente
+    // le dados do cliente
     while (true)
     {
         ssize_t bytesRead = read(clientSocket, buffer, sizeof(buffer) - 1);
@@ -28,7 +30,7 @@ void handleClient(int clientSocket)
             break;
         }
 
-        buffer[bytesRead] = '\0'; // tratando dados como string
+        buffer[bytesRead] = '\0'; // trata os dados como string
         std::cout << "Received: " << buffer << std::endl;
 
         ssize_t bytesWritten = 0;
@@ -38,8 +40,8 @@ void handleClient(int clientSocket)
             if (result <= 0)
             {
                 break;
-                bytesWritten += result;
             }
+            bytesWritten += result;
         }
 
         std::cout << "Closing connection with client" << std::endl;
@@ -47,13 +49,20 @@ void handleClient(int clientSocket)
     }
 }
 
+std::mutex coutMutex; // Mutex para sincronizar o acesso ao std::cout
+
 void workerThread()
 {
+    {
+        std::lock_guard<std::mutex> lock(coutMutex);
+        std::cout << "Thread ID: " << std::this_thread::get_id() << " has been created." << std::endl;
+    }
+
     while (true)
     {
         int clientSocket;
 
-        // aguarda por um cliente na fila
+        // espera por um cliente na fila
         {
             std::unique_lock<std::mutex> lock(queueMutex);
             queueCondition.wait(lock, []
@@ -71,7 +80,7 @@ int main()
 {
     int port = 4444;
 
-    //  socket
+    // cria o socket do servidor
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket == -1)
     {
@@ -79,15 +88,14 @@ int main()
         return -1;
     }
 
-    // configuração do endereço do servidor
-    // configurando servidor
+    // configura o endereco do servidor
     sockaddr_in serverAddr;
-    std::memset(&serverAddr, 0, sizeof(serverAddr)); // inicializa a estrutura com zeros
-    serverAddr.sin_family = AF_INET;                 // IPv4
-    serverAddr.sin_addr.s_addr = INADDR_ANY;         // aeita conexões de qualquer endereço IP
-    serverAddr.sin_port = htons(port);               // define a porta do servidor
+    std::memset(&serverAddr, 0, sizeof(serverAddr));
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_addr.s_addr = INADDR_ANY;
+    serverAddr.sin_port = htons(port);
 
-    // associa o socket à porta
+    // associa o socket a porta
     if (bind(serverSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) == -1)
     {
         std::cerr << "Failed to bind socket to port " << port << "!" << std::endl;
@@ -95,6 +103,7 @@ int main()
         return -1;
     }
 
+    // coloca o socket em modo de escuta
     if (listen(serverSocket, 5) == -1)
     {
         std::cerr << "Failed to listen on port " << port << "!" << std::endl;
@@ -113,7 +122,7 @@ int main()
 
     while (true)
     {
-        // cceita uma conexão de cliente
+        // aceita uma conexao de cliente
         sockaddr_in clientAddr;
         socklen_t clientLen = sizeof(clientAddr);
         int clientSocket = accept(serverSocket, (struct sockaddr *)&clientAddr, &clientLen);
@@ -125,7 +134,7 @@ int main()
 
         std::cout << "Accepted connection from client!" << std::endl;
 
-        // adiciona o cliente a fila ou retorna erro se a fila estiver cheia
+        // adiciona o cliente na fila ou rejeita se estiver cheia
         {
             std::unique_lock<std::mutex> lock(queueMutex);
             if (clientQueue.size() >= THREAD_POOL_SIZE)

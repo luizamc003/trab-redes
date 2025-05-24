@@ -8,6 +8,10 @@
 // para comunicação com cliente
 void handleClient(int clientSocket)
 {
+
+    // /ID da thread que está lidando com o cliente
+    std::cout << "Thread ID: " << std::this_thread::get_id() << " handling client" << std::endl;
+
     // armazenando dados do cliente
     char buffer[1024];
     std::memset(buffer, 0, sizeof(buffer));
