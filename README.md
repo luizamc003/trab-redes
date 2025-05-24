@@ -158,3 +158,39 @@ Digite mensagens no cliente e veja as respostas do servidor.
   ```
 
 ---
+
+## Documentação Python
+
+### Implementação em Python
+A implementação em Python se dividiu em duas: 
+- implementacao_server_echo, a qual é um servidor echo, ou seja, que repete tudo que for enviado a ele - exceto o comando quit.
+- implementacao_comando_echo, a qual é um servidor que implementa o COMANDO, ou seja, ao receber o comando `echo`, repete tudo o que vem após ele.
+
+#### Arquivos
+
+- **client.py**: Implementação de um cliente que se conecta ao servidor e permite o envio e recebimento de mensagens. Esse arquivo é comum para as implementações em Python deste repositório.
+- **implementacao_server_echo/numero1.py**: Implementação de um servidor echo com um número variável de threads, sempre criando uma para cada nova conexão e destruindo-a quando a conexão é encerrada.
+- **implementacao_server_echo/numero2.py**: Implementação de um servidor echo com número fixo de threads. Possui 10 threads e, quando elas são todas ocupadas, não aceita mais conexões até que alguma seja liberada.
+- **implementacao_comando_echo/numero1.py**: Implementação de um servidor que possui o comando echo e com um número variável de threads, sempre criando uma para cada nova conexão e destruindo-a quando a conexão é encerrada.
+- **implementacao_comando_echo/numero2.py**: Implementação de um servidor que possui o comando echo e com número fixo de threads. Possui 10 threads e, quando elas são todas ocupadas, não aceita mais conexões até que alguma seja liberada
+
+### Como Executar
+
+1. **Inicializar o servidor**
+Para inicializar o servidor, use o comando a seguir, substituindo X por `server` ou `comando` e Y por `1` ou `2`. 
+```
+python3 implementacao_X_echo/numeroY.py 
+```
+
+2. **Inicializar o cliente**
+Como o cliente é apenas um para ambas implementações em Python, basta executa-lo em outro terminal
+```
+python3 client.py
+```
+
+## Observações
+
+- A porta que está sendo usada como padrão nessa implementação é a 1337. Certifique-se de que não há outro programa usando-a antes de inicializar o servidor.
+- Se necessário, troque-a por outra, substituindo o trecho 
+```PORTA = 1337``` 
+no código do cliente e do servidor pela porta desejada
